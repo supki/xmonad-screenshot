@@ -1,0 +1,16 @@
+name:                xmonad-screenshot
+version:             0.1.0.0
+synopsis:            Workspaces screenshooting utility for XMonad.
+homepage:            http://github.com/supki/xmonad-screenshot
+license:             MIT
+license-file:        LICENSE
+author:              Matvey Aksenov
+maintainer:          matvey.aksenov@gmail.com
+category:            XMonad
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  build-depends:       base >= 3 && < 5, xmonad >= 0.9, process < 1.2, filepath < 1.4, directory < 1.2, gd == 3000.7.3
+  exposed-modules:     XMonad.Util.WorkspaceScreenshot
+  hs-source-dirs:      src
