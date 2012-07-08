@@ -11,9 +11,12 @@ import Control.Monad (foldM, foldM_, void)
 import Data.List ((\\))
 import System.Directory (createDirectory, getAppUserDataDirectory, removeDirectoryRecursive)
 import System.FilePath ((</>), (<.>))
-import System.Process (getProcessExitCode, runProcess)
 
 import Graphics.GD (Image, copyRegion, imageSize, loadPngFile, newImage, savePngFile)
+import Graphics.UI.Gtk.Gdk.Drawable (drawableGetSize)
+import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetDefaultRootWindow)
+import Graphics.UI.Gtk.Gdk.Events (Rectangle(..))
+import Graphics.UI.Gtk.Gdk.Pixbuf (pixbufGetFromDrawable, pixbufSave)
 import XMonad hiding (Image)
 import XMonad.StackSet (currentTag, view)
 
@@ -37,17 +40,18 @@ allWorkspacesExcept blacklist mode = do
 
   save_workspace i t = do
     windows $ view t
-    runScrot temp_directory_path i
+    captureScreen temp_directory_path i
     return $ succ i
 
 
-runScrot ∷ String → Int → X ()
-runScrot p (show → name) = liftIO $ do
-  threadDelay 500000
-  handle ← runProcess "/usr/bin/scrot" ["--silent", "--", name <.> "png"] (Just p) Nothing Nothing Nothing Nothing
-  check handle
- where
-  check handle = getProcessExitCode handle >>= maybe (threadDelay 1000 >> check handle) (const $ return ())
+captureScreen ∷ String → Int → X ()
+captureScreen fp (show → name) = liftIO $
+  do threadDelay 500000
+     rw ← drawWindowGetDefaultRootWindow
+     (w, h) ← drawableGetSize rw
+     p ← pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
+     whenJust p $ \p' →
+       pixbufSave p' (fp </> name <.> "png") "png" []
 
 
 data Mode = H | V
