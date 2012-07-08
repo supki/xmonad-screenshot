@@ -7,7 +7,7 @@ module XMonad.Util.WorkspaceScreenshot
 import Control.Applicative ((<$>))
 import Control.Arrow ((&&&))
 import Control.Concurrent (threadDelay)
-import Control.Monad (foldM, foldM_)
+import Control.Monad (foldM, foldM_, void)
 import Data.List ((\\))
 import System.Directory (createDirectory, getAppUserDataDirectory, removeDirectoryRecursive)
 import System.FilePath ((</>), (<.>))
@@ -31,7 +31,7 @@ allWorkspacesExcept blacklist mode = do
   ts ← asks ((\\ blacklist) . workspaces . config)
   max_i ← pred <$> foldM save_workspace 0 ts
   windows $ view c
-  merge mode $ map (\i → temp_directory_path </> show i <.> "png") [0..max_i]
+  void $ xfork $ merge mode $ map (\i → temp_directory_path </> show i <.> "png") [0..max_i]
  where
   temp_directory_path = "/tmp/XMonad.screenshots"
 
@@ -73,8 +73,8 @@ max_width xs@(HImage {}:_) = sum $ map width xs
 max_width xs@(VImage {}:_) = maximum $ map width xs
 
 
-merge ∷ Mode → [FilePath] → X ()
-merge mode files = liftIO $ do
+merge ∷ Mode → [FilePath] → IO ()
+merge mode files = do
   images ← mapM (loadImage mode) files
   new_image ← newImage $ (max_width &&& max_height) images
   foldM_ (addTo new_image) 0 images
