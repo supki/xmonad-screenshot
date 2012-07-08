@@ -7,8 +7,9 @@ module XMonad.Util.WorkspaceScreenshot
 import Control.Applicative ((<$>))
 import Control.Arrow ((&&&))
 import Control.Concurrent (threadDelay)
-import Control.Monad (foldM, foldM_, void)
+import Control.Monad (foldM_, void, zipWithM_)
 import Data.List ((\\))
+import Data.Maybe (catMaybes)
 import System.Directory (createDirectory, getAppUserDataDirectory, removeDirectoryRecursive)
 import System.FilePath ((</>), (<.>))
 
@@ -16,7 +17,7 @@ import Graphics.GD (Image, copyRegion, imageSize, loadPngFile, newImage, savePng
 import Graphics.UI.Gtk.Gdk.Drawable (drawableGetSize)
 import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Events (Rectangle(..))
-import Graphics.UI.Gtk.Gdk.Pixbuf (pixbufGetFromDrawable, pixbufSave)
+import Graphics.UI.Gtk.Gdk.Pixbuf (Pixbuf, pixbufGetFromDrawable, pixbufSave)
 import XMonad hiding (Image)
 import XMonad.StackSet (currentTag, view)
 
@@ -32,26 +33,22 @@ allWorkspacesExcept blacklist mode = do
     createDirectory temp_directory_path
   c ← gets (currentTag . windowset)
   ts ← asks ((\\ blacklist) . workspaces . config)
-  max_i ← pred <$> foldM save_workspace 0 ts
+  ps ← catMaybes <$> mapM save_workspace ts
   windows $ view c
-  void $ xfork $ merge mode $ map (\i → temp_directory_path </> show i <.> "png") [0..max_i]
+  zipWithM_ (\p i → liftIO $ pixbufSave p (temp_directory_path </> show i <.> "png") "png" []) ps [(1::Int)..]
+  void $ xfork $ merge mode $ map (\i → temp_directory_path </> show i <.> "png") [1..length ps]
  where
   temp_directory_path = "/tmp/XMonad.screenshots"
 
-  save_workspace i t = do
-    windows $ view t
-    captureScreen temp_directory_path i
-    return $ succ i
+  save_workspace t = windows (view t) >> captureScreen
 
 
-captureScreen ∷ String → Int → X ()
-captureScreen fp (show → name) = liftIO $
+captureScreen ∷ X (Maybe Pixbuf)
+captureScreen = liftIO $
   do threadDelay 500000
      rw ← drawWindowGetDefaultRootWindow
      (w, h) ← drawableGetSize rw
-     p ← pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
-     whenJust p $ \p' →
-       pixbufSave p' (fp </> name <.> "png") "png" []
+     pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
 
 
 data Mode = H | V
