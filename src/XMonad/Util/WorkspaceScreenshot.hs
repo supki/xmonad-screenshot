@@ -7,15 +7,15 @@ module XMonad.Util.WorkspaceScreenshot
 import Control.Applicative ((<$>))
 import Control.Arrow ((&&&))
 import Control.Concurrent (threadDelay)
-import Control.Monad (foldM, forM_)
+import Control.Monad (foldM, foldM_)
 import Data.List ((\\))
 import System.Directory (createDirectory, getAppUserDataDirectory, removeDirectoryRecursive)
 import System.FilePath ((</>), (<.>))
-import System.Process (ProcessHandle, getProcessExitCode, runProcess, waitForProcess)
+import System.Process (getProcessExitCode, runProcess)
 
 import Graphics.GD (Image, copyRegion, imageSize, loadPngFile, newImage, savePngFile)
 import XMonad hiding (Image)
-import XMonad.StackSet (view)
+import XMonad.StackSet (currentTag, view)
 
 
 allWorkspaces ∷ Mode → X ()
@@ -27,8 +27,10 @@ allWorkspacesExcept blacklist mode = do
   liftIO $ do
     removeDirectoryRecursive temp_directory_path
     createDirectory temp_directory_path
+  c ← gets (currentTag . windowset)
   ts ← asks ((\\ blacklist) . workspaces . config)
   max_i ← pred <$> foldM save_workspace 0 ts
+  windows $ view c
   merge mode $ map (\i → temp_directory_path </> show i <.> "png") [0..max_i]
  where
   temp_directory_path = "/tmp/XMonad.screenshots"
@@ -75,7 +77,7 @@ merge ∷ Mode → [FilePath] → X ()
 merge mode files = liftIO $ do
   images ← mapM (loadImage mode) files
   new_image ← newImage $ (max_width &&& max_height) images
-  foldM (addTo new_image) 0 images
+  foldM_ (addTo new_image) 0 images
   dir ← getAppUserDataDirectory "xmonad"
   savePngFile (dir </> "screenshot.png") new_image
  where
