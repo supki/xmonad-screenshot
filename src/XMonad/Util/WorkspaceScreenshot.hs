@@ -5,19 +5,17 @@ module XMonad.Util.WorkspaceScreenshot
   ) where
 
 import Control.Applicative ((<$>))
-import Control.Arrow ((&&&))
 import Control.Concurrent (threadDelay)
-import Control.Monad (foldM_, void, zipWithM_)
+import Control.Monad (foldM_, void)
 import Data.List ((\\))
 import Data.Maybe (catMaybes)
-import System.Directory (createDirectory, getAppUserDataDirectory, removeDirectoryRecursive)
+import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
 
-import Graphics.GD (Image, copyRegion, imageSize, loadPngFile, newImage, savePngFile)
 import Graphics.UI.Gtk.Gdk.Drawable (drawableGetSize)
 import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Events (Rectangle(..))
-import Graphics.UI.Gtk.Gdk.Pixbuf (Pixbuf, pixbufGetFromDrawable, pixbufSave)
+import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
 import XMonad hiding (Image)
 import XMonad.StackSet (currentTag, view)
 
@@ -28,59 +26,54 @@ allWorkspaces = allWorkspacesExcept []
 
 allWorkspacesExcept ∷ [WorkspaceId] → Mode → X ()
 allWorkspacesExcept blacklist mode = do
-  liftIO $ do
-    removeDirectoryRecursive temp_directory_path
-    createDirectory temp_directory_path
   c ← gets (currentTag . windowset)
   ts ← asks ((\\ blacklist) . workspaces . config)
-  ps ← catMaybes <$> mapM save_workspace ts
+  ps ← catMaybes <$> mapM (\t → windows (view t) >> captureScreen) ts
   windows $ view c
-  zipWithM_ (\p i → liftIO $ pixbufSave p (temp_directory_path </> show i <.> "png") "png" []) ps [(1::Int)..]
-  void $ xfork $ merge mode $ map (\i → temp_directory_path </> show i <.> "png") [1..length ps]
- where
-  temp_directory_path = "/tmp/XMonad.screenshots"
-
-  save_workspace t = windows (view t) >> captureScreen
+  void $ xfork $ merge mode ps
 
 
 captureScreen ∷ X (Maybe Pixbuf)
 captureScreen = liftIO $
-  do threadDelay 500000
+  do threadDelay 100000
      rw ← drawWindowGetDefaultRootWindow
      (w, h) ← drawableGetSize rw
      pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
 
 
 data Mode = H | V
-data XImage = HImage { image ∷ Image, height ∷ Int, width ∷ Int }
-            | VImage { image ∷ Image, height ∷ Int, width ∷ Int }
-
-loadImage ∷ Mode → FilePath → IO XImage
-loadImage m fp = do
-  i ← loadPngFile fp
-  (w,h) ← imageSize i
-  return $ case m of
-    H → HImage {image = i, height = h, width = w}
-    V → VImage {image = i, height = h, width = w}
-
-max_height ∷ [XImage] → Int
-max_height [] = 0
-max_height xs@(HImage {}:_) = maximum $ map height xs
-max_height xs@(VImage {}:_) = sum $ map height xs
-
-max_width ∷ [XImage] → Int
-max_width [] = 0
-max_width xs@(HImage {}:_) = sum $ map width xs
-max_width xs@(VImage {}:_) = maximum $ map width xs
 
 
-merge ∷ Mode → [FilePath] → IO ()
-merge mode files = do
-  images ← mapM (loadImage mode) files
-  new_image ← newImage $ (max_width &&& max_height) images
-  foldM_ (addTo new_image) 0 images
+max_height ∷ Mode → [Pixbuf] → IO Int
+max_height _ [] = return 0
+max_height H xs = maximum <$> mapM pixbufGetHeight xs
+max_height V xs = sum <$> mapM pixbufGetHeight xs
+
+
+max_width ∷ Mode → [Pixbuf] → IO Int
+max_width _ [] = return 0
+max_width H xs = sum <$> mapM pixbufGetWidth xs
+max_width V xs = maximum <$> mapM pixbufGetWidth xs
+
+
+merge ∷ Mode → [Pixbuf] → IO ()
+merge mode ps = do
+  w ← max_width mode ps
+  h ← max_height mode ps
+  p ← pixbufNew ColorspaceRgb False 8 w h
+  foldM_ (addTo mode p) 0 ps
   dir ← getAppUserDataDirectory "xmonad"
-  savePngFile (dir </> "screenshot.png") new_image
- where
-  addTo n s (HImage { image = i, width = w, height = h }) = copyRegion (0,0) (w, h) i (s, 0) n >> return (s + w)
-  addTo n s (VImage { image = i, width = w, height = h }) = copyRegion (0,0) (w, h) i (0, s) n >> return (s + h)
+  pixbufSave p (dir </> "screenshot" <.> ".png") "png" []
+
+
+addTo ∷ Mode → Pixbuf → Int → Pixbuf → IO Int
+addTo H p a p' =
+  do w' ← pixbufGetWidth p'
+     h' ← pixbufGetHeight p'
+     pixbufCopyArea p' 0 0 w' h' p a 0
+     return (a + w')
+addTo V p a p' =
+  do w' ← pixbufGetWidth p'
+     h' ← pixbufGetHeight p'
+     pixbufCopyArea p' 0 0 w' h' p 0 a
+     return (a + h')

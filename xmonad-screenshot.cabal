@@ -11,6 +11,6 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  build-depends:       base >= 3 && < 5, xmonad >= 0.9, process < 1.2, filepath < 1.4, directory < 1.2, gd == 3000.7.3, gtk >= 0.12.3
+  build-depends:       base >= 3 && < 5, xmonad >= 0.9, filepath < 1.4, directory < 1.2, gtk >= 0.12.3
   exposed-modules:     XMonad.Util.WorkspaceScreenshot
   hs-source-dirs:      src
