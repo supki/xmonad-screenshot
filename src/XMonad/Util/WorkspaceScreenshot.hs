@@ -1,7 +1,13 @@
 {-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE ViewPatterns #-}
+-- | Provides an utility functions for easy and robust workspaces' screen capturing.
 module XMonad.Util.WorkspaceScreenshot
-  ( allWorkspaces, allWorkspacesExcept, Mode(..)
+  ( -- * Screenshoting routines
+    allWorkspaces
+  , allWorkspacesExcept
+  , allWorkspacesWith
+  , allWorkspacesExceptWith
+    -- * Screenshoting mode
+  , Mode(..)
   ) where
 
 import Control.Applicative ((<$>))
@@ -20,12 +26,24 @@ import XMonad hiding (Image)
 import XMonad.StackSet (currentTag, view)
 
 
-allWorkspaces ∷ Mode → X ()
-allWorkspaces = allWorkspacesExcept []
+-- | Capture screens from all workspaces with horizontal layout.
+allWorkspaces ∷ X ()
+allWorkspaces = allWorkspacesExceptWith [] H
 
 
-allWorkspacesExcept ∷ [WorkspaceId] → Mode → X ()
-allWorkspacesExcept blacklist mode = do
+-- | Capture screens from all workspaces except blacklisted with horizontal layout.
+allWorkspacesExcept ∷ [WorkspaceId] → X ()
+allWorkspacesExcept = flip allWorkspacesExceptWith H
+
+
+-- | Capture screens from all workspaces with specified layout.
+allWorkspacesWith ∷ Mode → X ()
+allWorkspacesWith = allWorkspacesExceptWith []
+
+
+-- | Capture screens from all workspaces except blacklisted with specified layout.
+allWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
+allWorkspacesExceptWith blacklist mode = do
   c ← gets (currentTag . windowset)
   ts ← asks ((\\ blacklist) . workspaces . config)
   ps ← catMaybes <$> mapM (\t → windows (view t) >> captureScreen) ts
@@ -33,6 +51,8 @@ allWorkspacesExcept blacklist mode = do
   void $ xfork $ merge mode ps
 
 
+-- Capture screen with gtk pixbuf.
+-- Delay is necessary to get interfaces rendered.
 captureScreen ∷ X (Maybe Pixbuf)
 captureScreen = liftIO $
   do threadDelay 100000
@@ -41,39 +61,48 @@ captureScreen = liftIO $
      pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
 
 
-data Mode = H | V
+-- | Captured screens layout.
+data Mode = H -- ^ Horizontal.
+          | V -- ^ Vertical.
 
 
-max_height ∷ Mode → [Pixbuf] → IO Int
-max_height _ [] = return 0
-max_height H xs = maximum <$> mapM pixbufGetHeight xs
-max_height V xs = sum <$> mapM pixbufGetHeight xs
+-- Maximum height needed to construct final image.
+-- If one wants horizontal layout that's just height of the tallest pixbuf in the list.
+-- If one wants vertical layout that's sum of heights of pixbufs in the list.
+maxHeight ∷ Mode → [Pixbuf] → IO Int
+maxHeight _ [] = return 0
+maxHeight H xs = maximum <$> mapM pixbufGetHeight xs
+maxHeight V xs = sum <$> mapM pixbufGetHeight xs
 
 
-max_width ∷ Mode → [Pixbuf] → IO Int
-max_width _ [] = return 0
-max_width H xs = sum <$> mapM pixbufGetWidth xs
-max_width V xs = maximum <$> mapM pixbufGetWidth xs
+-- Maximum width needed to construct final image.
+-- If one wants horizontal layout that's sum of widths of pixbufs in the list.
+-- If one wants vertical layout that's just width of the fattest pixbuf in the list.
+maxWidth ∷ Mode → [Pixbuf] → IO Int
+maxWidth _ [] = return 0
+maxWidth H xs = sum <$> mapM pixbufGetWidth xs
+maxWidth V xs = maximum <$> mapM pixbufGetWidth xs
 
 
+-- Contruct final image from the list of pixbufs.
+-- TODO: That should be parallelized.
 merge ∷ Mode → [Pixbuf] → IO ()
 merge mode ps = do
-  w ← max_width mode ps
-  h ← max_height mode ps
+  w ← maxWidth mode ps
+  h ← maxHeight mode ps
   p ← pixbufNew ColorspaceRgb False 8 w h
   foldM_ (addTo mode p) 0 ps
   dir ← getAppUserDataDirectory "xmonad"
   pixbufSave p (dir </> "screenshot" <.> ".png") "png" []
-
-
-addTo ∷ Mode → Pixbuf → Int → Pixbuf → IO Int
-addTo H p a p' =
-  do w' ← pixbufGetWidth p'
-     h' ← pixbufGetHeight p'
-     pixbufCopyArea p' 0 0 w' h' p a 0
-     return (a + w')
-addTo V p a p' =
-  do w' ← pixbufGetWidth p'
-     h' ← pixbufGetHeight p'
-     pixbufCopyArea p' 0 0 w' h' p 0 a
-     return (a + h')
+ where
+  addTo ∷ Mode → Pixbuf → Int → Pixbuf → IO Int
+  addTo H p a p' =
+    do w' ← pixbufGetWidth p'
+       h' ← pixbufGetHeight p'
+       pixbufCopyArea p' 0 0 w' h' p a 0
+       return (a + w')
+  addTo V p a p' =
+    do w' ← pixbufGetWidth p'
+       h' ← pixbufGetHeight p'
+       pixbufCopyArea p' 0 0 w' h' p 0 a
+       return (a + h')
