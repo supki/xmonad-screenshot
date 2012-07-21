@@ -15,26 +15,24 @@ import Data.Maybe (catMaybes, isJust)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
 
-import Graphics.UI.Gtk.Gdk.Drawable (drawableGetSize)
-import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetDefaultRootWindow)
-import Graphics.UI.Gtk.Gdk.Events (Rectangle(..))
+import Graphics.UI.Gtk (Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
-import XMonad hiding (Image)
+import XMonad hiding (Image, Rectangle)
 import qualified XMonad.StackSet as S
 
 
--- | Capture screens from specific workspaces.
+-- | Capture screens from workspaces satisfying given predicate.
 captureWorkspacesWhen ∷ (WindowSpace → X Bool) → Mode → X ()
-captureWorkspacesWhen p = captureWorkspacesWhenId (fromId >=> p)
-  where fromId i = gets $ head . filter ((== i) . S.tag) . S.workspaces . windowset
+captureWorkspacesWhen p = captureWorkspacesWhenId (workspaceIdToWindowSpace >=> p)
+ where
+  workspaceIdToWindowSpace i = gets $ head . filter ((== i) . S.tag) . S.workspaces . windowset
 
 
--- | Capture screens from workspaces with specific WorkspaceId.
+-- | Capture screens from workspaces which id satisfies given predicate.
 captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → Mode → X ()
 captureWorkspacesWhenId p mode = do
   c ← gets $ S.currentTag . windowset
-  ts ← filterM p =<< asks (workspaces . config)
-  ps ← catMaybes <$> mapM (\t → windows (S.view t) >> captureScreen) ts
+  ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
   windows $ S.view c
   void $ xfork $ merge mode ps
 
@@ -46,7 +44,7 @@ captureScreen = liftIO $
   do threadDelay 100000
      rw ← drawWindowGetDefaultRootWindow
      (w, h) ← drawableGetSize rw
-     pixbufGetFromDrawable rw (Graphics.UI.Gtk.Gdk.Events.Rectangle 0 0 w h)
+     pixbufGetFromDrawable rw (Rectangle 0 0 w h)
 
 
 -- | Captured screens layout.
