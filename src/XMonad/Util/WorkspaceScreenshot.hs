@@ -17,7 +17,7 @@ import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad (foldM_, void)
 import Data.List ((\\))
-import Data.Maybe (catMaybes, isNothing)
+import Data.Maybe (catMaybes, isJust)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
 
@@ -36,7 +36,7 @@ allWorkspaces = allWorkspacesExceptWith [] H
 
 -- | Capture screens from all visible workspaces with horizontal layout.
 allWorkspacesVisible ∷ X ()
-allWorkspacesVisible = allWorkspacesWhen (isNothing . S.stack) H
+allWorkspacesVisible = allWorkspacesWhen (isJust . S.stack) H
 
 
 -- | Capture screens from all workspaces except blacklisted with horizontal layout.
@@ -53,14 +53,14 @@ allWorkspacesWith = allWorkspacesExceptWith []
 allWorkspacesWhen ∷ (S.Workspace WorkspaceId (Layout Window) Window → Bool) → Mode → X ()
 allWorkspacesWhen p mode = do
   wsl ← gets $ S.workspaces . windowset
-  allWorkspacesExceptWith (map S.tag $ filter p wsl) mode
+  allWorkspacesExceptWith (map S.tag $ filter (not . p) wsl) mode
 
 
 -- | Capture screens from workspaces with spicific WorkspaceId.
 allWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
 allWorkspacesWhenId p mode = do
   wsl ← gets $ S.workspaces . windowset
-  allWorkspacesExceptWith (filter p $ map S.tag wsl) mode
+  allWorkspacesExceptWith (filter (not . p) $ map S.tag wsl) mode
 
 
 -- | Capture screens from all workspaces except blacklisted with specified layout.
