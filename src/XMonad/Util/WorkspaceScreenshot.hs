@@ -2,12 +2,7 @@
 -- | Provides an utility functions for easy and robust workspaces' screen capturing.
 module XMonad.Util.WorkspaceScreenshot
   ( -- * Screenshoting routines
-    captureWorkspaces
-  , captureWorkspacesVisible
-  , captureWorkspacesExcept
-  , captureWorkspacesWith
-  , captureWorkspacesExceptWith
-  , captureWorkspacesWhen
+    captureWorkspacesWhen
   , captureWorkspacesWhenId
     -- * Screenshoting mode
   , Mode(..)
@@ -26,31 +21,6 @@ import Graphics.UI.Gtk.Gdk.Events (Rectangle(..))
 import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
 import XMonad hiding (Image)
 import qualified XMonad.StackSet as S
-
-
--- | Capture screens from all workspaces with horizontal layout.
-captureWorkspaces ∷ X ()
-captureWorkspaces = captureWorkspacesExceptWith [] H
-
-
--- | Capture screens from all visible workspaces with horizontal layout.
-captureWorkspacesVisible ∷ X ()
-captureWorkspacesVisible = captureWorkspacesWhen (return . isJust . S.stack) H
-
-
--- | Capture screens from all workspaces except blacklisted with horizontal layout.
-captureWorkspacesExcept ∷ [WorkspaceId] → X ()
-captureWorkspacesExcept = flip captureWorkspacesExceptWith H
-
-
--- | Capture screens from all workspaces with specified layout.
-captureWorkspacesWith ∷ Mode → X ()
-captureWorkspacesWith = captureWorkspacesExceptWith []
-
--- | Capture screens from all workspaces except blacklisted with specified layout.
-captureWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
-captureWorkspacesExceptWith blacklist =
-  captureWorkspacesWhenId $ return . (`notElem` blacklist)
 
 
 -- | Capture screens from specific workspaces.
