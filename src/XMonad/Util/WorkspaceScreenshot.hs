@@ -52,17 +52,19 @@ captureWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
 captureWorkspacesExceptWith blacklist = captureWorkspacesWhenId (`notElem` blacklist)
 
 
--- | Capture screens from workspaces with specific WorkspaceId.
-captureWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
-captureWorkspacesWhenId p = captureWorkspacesWhen (p . S.tag)
-
-
 -- | Capture screens from specific workspaces.
 captureWorkspacesWhen ∷ (WindowSpace → Bool) → Mode → X ()
 captureWorkspacesWhen p mode = do
+  wsl ← gets $ map S.tag . filter p . S.workspaces . windowset
+  captureWorkspacesWhenId (`elem` wsl) mode
+
+
+-- | Capture screens from workspaces with specific WorkspaceId.
+captureWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
+captureWorkspacesWhenId p mode = do
   c ← gets $ S.currentTag . windowset
-  wsl ← gets $ filter p . S.workspaces . windowset
-  ps ← catMaybes <$> mapM (\t → windows (S.view $ S.tag t) >> captureScreen) wsl
+  ts ← asks (filter p . workspaces . config)
+  ps ← catMaybes <$> mapM (\t → windows (S.view t) >> captureScreen) ts
   windows $ S.view c
   void $ xfork $ merge mode ps
 
