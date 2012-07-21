@@ -15,7 +15,7 @@ module XMonad.Util.WorkspaceScreenshot
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
-import Control.Monad (foldM_, void)
+import Control.Monad (filterM, foldM_, void, (>=>))
 import Data.Maybe (catMaybes, isJust)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
@@ -35,7 +35,7 @@ captureWorkspaces = captureWorkspacesExceptWith [] H
 
 -- | Capture screens from all visible workspaces with horizontal layout.
 captureWorkspacesVisible ∷ X ()
-captureWorkspacesVisible = captureWorkspacesWhen (isJust . S.stack) H
+captureWorkspacesVisible = captureWorkspacesWhen (return . isJust . S.stack) H
 
 
 -- | Capture screens from all workspaces except blacklisted with horizontal layout.
@@ -49,21 +49,21 @@ captureWorkspacesWith = captureWorkspacesExceptWith []
 
 -- | Capture screens from all workspaces except blacklisted with specified layout.
 captureWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
-captureWorkspacesExceptWith blacklist = captureWorkspacesWhenId (`notElem` blacklist)
+captureWorkspacesExceptWith blacklist =
+  captureWorkspacesWhenId $ return . (`notElem` blacklist)
 
 
 -- | Capture screens from specific workspaces.
-captureWorkspacesWhen ∷ (WindowSpace → Bool) → Mode → X ()
-captureWorkspacesWhen p mode = do
-  wsl ← gets $ map S.tag . filter p . S.workspaces . windowset
-  captureWorkspacesWhenId (`elem` wsl) mode
+captureWorkspacesWhen ∷ (WindowSpace → X Bool) → Mode → X ()
+captureWorkspacesWhen p = captureWorkspacesWhenId (fromId >=> p)
+  where fromId i = gets $ head . filter ((== i) . S.tag) . S.workspaces . windowset
 
 
 -- | Capture screens from workspaces with specific WorkspaceId.
-captureWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
+captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → Mode → X ()
 captureWorkspacesWhenId p mode = do
   c ← gets $ S.currentTag . windowset
-  ts ← asks (filter p . workspaces . config)
+  ts ← filterM p =<< asks (workspaces . config)
   ps ← catMaybes <$> mapM (\t → windows (S.view t) >> captureScreen) ts
   windows $ S.view c
   void $ xfork $ merge mode ps
