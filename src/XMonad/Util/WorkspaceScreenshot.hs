@@ -2,13 +2,13 @@
 -- | Provides an utility functions for easy and robust workspaces' screen capturing.
 module XMonad.Util.WorkspaceScreenshot
   ( -- * Screenshoting routines
-    allWorkspaces
-  , allWorkspacesVisible
-  , allWorkspacesExcept
-  , allWorkspacesWith
-  , allWorkspacesExceptWith
-  , allWorkspacesWhen
-  , allWorkspacesWhenId
+    captureWorkspaces
+  , captureWorkspacesVisible
+  , captureWorkspacesExcept
+  , captureWorkspacesWith
+  , captureWorkspacesExceptWith
+  , captureWorkspacesWhen
+  , captureWorkspacesWhenId
     -- * Screenshoting mode
   , Mode(..)
   ) where
@@ -16,7 +16,6 @@ module XMonad.Util.WorkspaceScreenshot
 import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad (foldM_, void)
-import Data.List ((\\))
 import Data.Maybe (catMaybes, isJust)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
@@ -30,45 +29,40 @@ import qualified XMonad.StackSet as S
 
 
 -- | Capture screens from all workspaces with horizontal layout.
-allWorkspaces ∷ X ()
-allWorkspaces = allWorkspacesExceptWith [] H
+captureWorkspaces ∷ X ()
+captureWorkspaces = captureWorkspacesExceptWith [] H
 
 
 -- | Capture screens from all visible workspaces with horizontal layout.
-allWorkspacesVisible ∷ X ()
-allWorkspacesVisible = allWorkspacesWhen (isJust . S.stack) H
+captureWorkspacesVisible ∷ X ()
+captureWorkspacesVisible = captureWorkspacesWhen (isJust . S.stack) H
 
 
 -- | Capture screens from all workspaces except blacklisted with horizontal layout.
-allWorkspacesExcept ∷ [WorkspaceId] → X ()
-allWorkspacesExcept = flip allWorkspacesExceptWith H
+captureWorkspacesExcept ∷ [WorkspaceId] → X ()
+captureWorkspacesExcept = flip captureWorkspacesExceptWith H
 
 
 -- | Capture screens from all workspaces with specified layout.
-allWorkspacesWith ∷ Mode → X ()
-allWorkspacesWith = allWorkspacesExceptWith []
+captureWorkspacesWith ∷ Mode → X ()
+captureWorkspacesWith = captureWorkspacesExceptWith []
+
+-- | Capture screens from all workspaces except blacklisted with specified layout.
+captureWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
+captureWorkspacesExceptWith blacklist = captureWorkspacesWhenId (`notElem` blacklist)
+
+
+-- | Capture screens from workspaces with specific WorkspaceId.
+captureWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
+captureWorkspacesWhenId p = captureWorkspacesWhen (p . S.tag)
 
 
 -- | Capture screens from specific workspaces.
-allWorkspacesWhen ∷ (S.Workspace WorkspaceId (Layout Window) Window → Bool) → Mode → X ()
-allWorkspacesWhen p mode = do
-  wsl ← gets $ S.workspaces . windowset
-  allWorkspacesExceptWith (map S.tag $ filter (not . p) wsl) mode
-
-
--- | Capture screens from workspaces with spicific WorkspaceId.
-allWorkspacesWhenId ∷ (WorkspaceId → Bool) → Mode → X ()
-allWorkspacesWhenId p mode = do
-  wsl ← gets $ S.workspaces . windowset
-  allWorkspacesExceptWith (filter (not . p) $ map S.tag wsl) mode
-
-
--- | Capture screens from all workspaces except blacklisted with specified layout.
-allWorkspacesExceptWith ∷ [WorkspaceId] → Mode → X ()
-allWorkspacesExceptWith blacklist mode = do
-  c ← gets (S.currentTag . windowset)
-  ts ← asks ((\\ blacklist) . workspaces . config)
-  ps ← catMaybes <$> mapM (\t → windows (S.view t) >> captureScreen) ts
+captureWorkspacesWhen ∷ (WindowSpace → Bool) → Mode → X ()
+captureWorkspacesWhen p mode = do
+  c ← gets $ S.currentTag . windowset
+  wsl ← gets $ filter p . S.workspaces . windowset
+  ps ← catMaybes <$> mapM (\t → windows (S.view $ S.tag t) >> captureScreen) wsl
   windows $ S.view c
   void $ xfork $ merge mode ps
 
