@@ -4,6 +4,8 @@ module XMonad.Util.WorkspaceScreenshot
   ( -- * Screenshoting routines
     captureWorkspacesWhen
   , captureWorkspacesWhenId
+    -- * Defaulting
+  , defaultPredicate
     -- * Screenshoting mode
   , Mode(..)
   ) where
@@ -11,7 +13,7 @@ module XMonad.Util.WorkspaceScreenshot
 import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad (filterM, foldM_, void, (>=>))
-import Data.Maybe (catMaybes, isJust)
+import Data.Maybe (catMaybes)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
 
@@ -35,6 +37,11 @@ captureWorkspacesWhenId p mode = do
   ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
   windows $ S.view c
   void $ xfork $ merge mode ps
+
+
+-- | Default predicate. Accepts every available workspace.
+defaultPredicate ∷ a → X Bool
+defaultPredicate = const (return True)
 
 
 -- Capture screen with gtk pixbuf.
