@@ -17,7 +17,7 @@ import import XMonad.Util.WorkspaceScreenshot
 
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   [ ...
-  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen defaultPredicate defaultHook H)
+  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
   , ...
   ]
 ```
@@ -31,7 +31,7 @@ predicate x = return $ x `notElem` ["blacklistedWorkspace1", "blacklistedWorkspa
 
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   [ ...
-  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen predicate defaultHook H)
+  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen predicate defaultHook horizontally)
   , ...
   ]
 ```
@@ -50,7 +50,7 @@ hook filepath =
 
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   [ ...
-  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen defaultPredicate hook H)
+  , ((modm .|. shiftMask, xK_u), captureWorkspacesWhen defaultPredicate hook horizontally)
   , ...
   ]
 ```
