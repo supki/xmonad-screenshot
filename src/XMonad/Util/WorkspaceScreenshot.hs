@@ -39,7 +39,7 @@ captureWorkspacesWhenId p hook mode = do
   c ← gets $ S.currentTag . windowset
   ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
   windows $ S.view c
-  void $ xfork $ merge mode ps hook
+  void $ xfork $ merge mode ps >>= hook
 
 
 -- | Default predicate. Accepts every available workspace.
@@ -106,12 +106,12 @@ vertically = CapturingLayout
 
 
 -- Contruct final image from the list of pixbufs.
-merge ∷ CapturingLayout → [Pixbuf] → (FilePath → IO ()) → IO ()
-merge layout ps hook = do
+merge ∷ CapturingLayout → [Pixbuf] → IO FilePath
+merge layout ps = do
   (h, w) ← dimensions layout ps
   p ← pixbufNew ColorspaceRgb False 8 w h
   fill layout ps p
   dir ← getAppUserDataDirectory "xmonad"
   let filepath = (dir </> "screenshot" <.> ".png")
   pixbufSave p filepath "png" []
-  hook filepath
+  return filepath
