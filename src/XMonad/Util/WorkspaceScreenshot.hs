@@ -19,7 +19,7 @@ import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
 
 import Graphics.UI.Gtk (Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
-import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
+import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixfbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
 import XMonad hiding (Image, Rectangle)
 import qualified XMonad.StackSet as S
 
@@ -84,7 +84,6 @@ maxWidth V xs = maximum <$> mapM pixbufGetWidth xs
 
 
 -- Contruct final image from the list of pixbufs.
--- TODO: That should be parallelized.
 merge ∷ Mode → [Pixbuf] → (FilePath → IO ()) → IO ()
 merge mode ps hook = do
   w ← maxWidth mode ps
