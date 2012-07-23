@@ -7,8 +7,10 @@ module XMonad.Util.WorkspaceScreenshot
     -- * Defaulting
   , defaultPredicate
   , defaultHook
-    -- * Screenshoting mode
-  , Mode(..)
+    -- * Screenshoting layout
+  , CapturingLayout(..)
+  , horizontally
+  , vertically
   ) where
 
 import Control.Applicative ((<$>))
@@ -25,14 +27,14 @@ import qualified XMonad.StackSet as S
 
 
 -- | Capture screens from workspaces satisfying given predicate.
-captureWorkspacesWhen ∷ (WindowSpace → X Bool) → (FilePath → IO ()) → Mode → X ()
+captureWorkspacesWhen ∷ (WindowSpace → X Bool) → (FilePath → IO ()) → CapturingLayout → X ()
 captureWorkspacesWhen p hook = captureWorkspacesWhenId (workspaceIdToWindowSpace >=> p) hook
  where
-  workspaceIdToWindowSpace i = gets $ head . filter ((== i) . S.tag) . S.workspaces . windowset
+  workspaceIdToWindowSpace i = gets $ head . filter (\w → S.tag w == i) . S.workspaces . windowset
 
 
 -- | Capture screens from workspaces which id satisfies given predicate.
-captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → (FilePath → IO ()) → Mode → X ()
+captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → (FilePath → IO ()) → CapturingLayout → X ()
 captureWorkspacesWhenId p hook mode = do
   c ← gets $ S.currentTag . windowset
   ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
@@ -60,49 +62,56 @@ captureScreen = liftIO $
      pixbufGetFromDrawable rw (Rectangle 0 0 w h)
 
 
--- | Captured screens layout.
-data Mode = H -- ^ Horizontal.
-          | V -- ^ Vertical.
+-- | Layout for resulting capture.
+data CapturingLayout = CapturingLayout
+  { dimensions ∷ [Pixbuf] → IO (Int, Int) -- ^ Maximum height and maximum width for capture
+  , fill ∷ [Pixbuf] → Pixbuf → IO () -- ^ Filling algorithm
+  }
 
 
--- Maximum height needed to construct final image.
--- If one wants horizontal layout that's just height of the tallest pixbuf in the list.
--- If one wants vertical layout that's sum of heights of pixbufs in the list.
-maxHeight ∷ Mode → [Pixbuf] → IO Int
-maxHeight _ [] = return 0
-maxHeight H xs = maximum <$> mapM pixbufGetHeight xs
-maxHeight V xs = sum <$> mapM pixbufGetHeight xs
-
-
--- Maximum width needed to construct final image.
--- If one wants horizontal layout that's sum of widths of pixbufs in the list.
--- If one wants vertical layout that's just width of the fattest pixbuf in the list.
-maxWidth ∷ Mode → [Pixbuf] → IO Int
-maxWidth _ [] = return 0
-maxWidth H xs = sum <$> mapM pixbufGetWidth xs
-maxWidth V xs = maximum <$> mapM pixbufGetWidth xs
-
-
--- Contruct final image from the list of pixbufs.
-merge ∷ Mode → [Pixbuf] → (FilePath → IO ()) → IO ()
-merge mode ps hook = do
-  w ← maxWidth mode ps
-  h ← maxHeight mode ps
-  p ← pixbufNew ColorspaceRgb False 8 w h
-  foldM_ (addTo mode p) 0 ps
-  dir ← getAppUserDataDirectory "xmonad"
-  let filepath = (dir </> "screenshot" <.> ".png")
-  pixbufSave p filepath "png" []
-  hook filepath
+-- | Capture screens layout horizontally.
+horizontally ∷ CapturingLayout
+horizontally = CapturingLayout
+  { dimensions = \xs →
+      do h ← maximum <$> mapM pixbufGetHeight xs
+         w ← sum <$> mapM pixbufGetWidth xs
+         return (h, w)
+  , fill = \ps p → foldM_ (addTo p) 0 ps
+  }
  where
-  addTo ∷ Mode → Pixbuf → Int → Pixbuf → IO Int
-  addTo H p a p' =
+  addTo ∷ Pixbuf → Int → Pixbuf → IO Int
+  addTo p a p' =
     do w' ← pixbufGetWidth p'
        h' ← pixbufGetHeight p'
        pixbufCopyArea p' 0 0 w' h' p a 0
        return (a + w')
-  addTo V p a p' =
+
+
+-- | Capture screens layout vertically.
+vertically ∷ CapturingLayout
+vertically = CapturingLayout
+  { dimensions = \xs →
+     do h ← sum <$> mapM pixbufGetHeight xs
+        w ← maximum <$> mapM pixbufGetWidth xs
+        return (h, w)
+  , fill = \ps p → foldM_ (addTo p) 0 ps
+  }
+ where
+  addTo ∷ Pixbuf → Int → Pixbuf → IO Int
+  addTo p a p' =
     do w' ← pixbufGetWidth p'
        h' ← pixbufGetHeight p'
        pixbufCopyArea p' 0 0 w' h' p 0 a
        return (a + h')
+
+
+-- Contruct final image from the list of pixbufs.
+merge ∷ CapturingLayout → [Pixbuf] → (FilePath → IO ()) → IO ()
+merge layout ps hook = do
+  (h, w) ← dimensions layout ps
+  p ← pixbufNew ColorspaceRgb False 8 w h
+  fill layout ps p
+  dir ← getAppUserDataDirectory "xmonad"
+  let filepath = (dir </> "screenshot" <.> ".png")
+  pixbufSave p filepath "png" []
+  hook filepath
