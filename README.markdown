@@ -44,7 +44,7 @@ import System.FilePath
 import System.Directory
 import XMonad.Util.WorkspaceScreenshot
 
-hook filepath = liftIO $
+hook filepath =
   do hd <- getHomeDirectory
 	 renameFile filepath (hd </> "Pictures" </> filepath)
 

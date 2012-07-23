@@ -6,6 +6,7 @@ module XMonad.Util.WorkspaceScreenshot
   , captureWorkspacesWhenId
     -- * Defaulting
   , defaultPredicate
+  , defaultHook
     -- * Screenshoting mode
   , Mode(..)
   ) where
@@ -24,24 +25,29 @@ import qualified XMonad.StackSet as S
 
 
 -- | Capture screens from workspaces satisfying given predicate.
-captureWorkspacesWhen ∷ (WindowSpace → X Bool) → Mode → X ()
-captureWorkspacesWhen p = captureWorkspacesWhenId (workspaceIdToWindowSpace >=> p)
+captureWorkspacesWhen ∷ (WindowSpace → X Bool) → (FilePath → IO ()) → Mode → X ()
+captureWorkspacesWhen p hook = captureWorkspacesWhenId (workspaceIdToWindowSpace >=> p) hook
  where
   workspaceIdToWindowSpace i = gets $ head . filter ((== i) . S.tag) . S.workspaces . windowset
 
 
 -- | Capture screens from workspaces which id satisfies given predicate.
-captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → Mode → X ()
-captureWorkspacesWhenId p mode = do
+captureWorkspacesWhenId ∷ (WorkspaceId → X Bool) → (FilePath → IO ()) → Mode → X ()
+captureWorkspacesWhenId p hook mode = do
   c ← gets $ S.currentTag . windowset
   ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
   windows $ S.view c
-  void $ xfork $ merge mode ps
+  void $ xfork $ merge mode ps hook
 
 
 -- | Default predicate. Accepts every available workspace.
 defaultPredicate ∷ a → X Bool
 defaultPredicate = const (return True)
+
+
+-- | Default hook. Does nothing.
+defaultHook ∷ a → IO ()
+defaultHook = const (return ())
 
 
 -- Capture screen with gtk pixbuf.
@@ -79,14 +85,16 @@ maxWidth V xs = maximum <$> mapM pixbufGetWidth xs
 
 -- Contruct final image from the list of pixbufs.
 -- TODO: That should be parallelized.
-merge ∷ Mode → [Pixbuf] → IO ()
-merge mode ps = do
+merge ∷ Mode → [Pixbuf] → (FilePath → IO ()) → IO ()
+merge mode ps hook = do
   w ← maxWidth mode ps
   h ← maxHeight mode ps
   p ← pixbufNew ColorspaceRgb False 8 w h
   foldM_ (addTo mode p) 0 ps
   dir ← getAppUserDataDirectory "xmonad"
-  pixbufSave p (dir </> "screenshot" <.> ".png") "png" []
+  let filepath = (dir </> "screenshot" <.> ".png")
+  pixbufSave p filepath "png" []
+  hook filepath
  where
   addTo ∷ Mode → Pixbuf → Int → Pixbuf → IO Int
   addTo H p a p' =
