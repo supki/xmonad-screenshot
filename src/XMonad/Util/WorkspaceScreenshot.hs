@@ -15,7 +15,7 @@ module XMonad.Util.WorkspaceScreenshot
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
-import Control.Monad (filterM, foldM_, void, (>=>))
+import Control.Monad (filterM, foldM_, (>=>))
 import Data.Maybe (catMaybes)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath ((</>), (<.>))
@@ -39,7 +39,8 @@ captureWorkspacesWhenId p hook mode = do
   c ← gets $ S.currentTag . windowset
   ps ← catMaybes <$> (mapM (\t → windows (S.view t) >> captureScreen) =<< filterM p =<< asks (workspaces . config))
   windows $ S.view c
-  void $ xfork $ merge mode ps >>= hook
+  xfork $ merge mode ps >>= hook
+  return ()
 
 
 -- | Default predicate. Accepts every available workspace.
