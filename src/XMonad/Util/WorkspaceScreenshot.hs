@@ -17,8 +17,6 @@ import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad (filterM, foldM_, (>=>))
 import Data.Maybe (catMaybes)
-import System.Directory (getAppUserDataDirectory)
-import System.FilePath ((</>), (<.>))
 
 import Graphics.UI.Gtk (Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
@@ -112,7 +110,7 @@ merge layout ps = do
   (h, w) ← dimensions layout ps
   p ← pixbufNew ColorspaceRgb False 8 w h
   fill layout ps p
-  dir ← getAppUserDataDirectory "xmonad"
-  let filepath = (dir </> "screenshot" <.> ".png")
+  dir ← getXMonadDir
+  let filepath = (dir ++ "/screenshot.png")
   pixbufSave p filepath "png" []
   return filepath
