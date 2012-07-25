@@ -1,8 +1,10 @@
 {-# LANGUAGE UnicodeSyntax #-}
 -- | Provides an utility functions for easy and robust workspaces' screen capturing.
 module XMonad.Util.WorkspaceScreenshot
-  ( -- * Screenshoting routines
-    captureWorkspacesWhen
+  ( -- * Initialization
+    initCapturing
+    -- * Screenshoting routines
+  , captureWorkspacesWhen
   , captureWorkspacesWhenId
     -- * Defaulting
   , defaultPredicate
@@ -18,10 +20,15 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (filterM, foldM_, (>=>))
 import Data.Maybe (catMaybes)
 
-import Graphics.UI.Gtk (Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
+import Graphics.UI.Gtk (initGUI, Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
 import XMonad hiding (Image, Rectangle)
 import qualified XMonad.StackSet as S
+
+
+-- | Init gtk to enable a possibility of capturing workspaces.
+initCapturing ∷ IO ()
+initCapturing = initGUI >> return ()
 
 
 -- | Capture screens from workspaces satisfying given predicate.
