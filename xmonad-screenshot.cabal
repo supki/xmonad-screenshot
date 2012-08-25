@@ -13,4 +13,5 @@ cabal-version:       >=1.8
 library
   build-depends:       base >= 3 && < 5, xmonad >= 0.9, gtk >= 0.12.3
   exposed-modules:     XMonad.Util.WorkspaceScreenshot
+  other-modules:       XMonad.Util.WorkspaceScreenshot.Internal
   hs-source-dirs:      src
