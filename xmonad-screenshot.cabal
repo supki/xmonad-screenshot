@@ -5,7 +5,7 @@ homepage:            http://github.com/supki/xmonad-screenshot
 license:             MIT
 license-file:        LICENSE
 author:              Matvey Aksenov
-maintainer:          matvey.aksenov@gmail.com
+maintainer:          Dmitry Malikov, malikov.d.y@gmail.com
 category:            XMonad
 build-type:          Simple
 cabal-version:       >=1.8
