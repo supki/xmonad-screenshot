@@ -28,7 +28,7 @@ main = do
 The most simple usage example:
 
 ```haskell
-import import XMonad.Util.WorkspaceScreenshot
+import XMonad.Util.WorkspaceScreenshot
 
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   [ ...
