@@ -40,7 +40,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 You can filter some blacklisted workspaces from capturing using predicates:
 
 ```haskell
-import import XMonad.Util.WorkspaceScreenshot
+import XMonad.Util.WorkspaceScreenshot
 
 predicate x = return $ x `notElem` ["blacklistedWorkspace1", "blacklistedWorkspace2"]
 
