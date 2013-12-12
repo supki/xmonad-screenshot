@@ -1,4 +1,5 @@
 #XMonad-screenshot
+[![Hackage](https://budueba.com/hackage/xmonad-screenshot)](http://hackage.haskell.org/package/xmonad-screenshot)
 
 Simple [gtk][1]-based screen capturing utility for [XMonad][2] window manager.  
 It's flexible enough to give a user options for comprehensive captured workspaces' filtering and post-capture processing.  
