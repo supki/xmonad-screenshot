@@ -1,19 +1,18 @@
-#XMonad-screenshot
+# XMonad-screenshot
 [![Hackage](https://budueba.com/hackage/xmonad-screenshot)](http://hackage.haskell.org/package/xmonad-screenshot)
+[![Build Status](https://secure.travis-ci.org/supki/xmonad-screenshot.png?branch=master)](http://travis-ci.org/supki/xmonad-screenshot)
 
-Simple [gtk][1]-based screen capturing utility for [XMonad][2] window manager.  
+[gtk][1]-based screen capturing utility for the [XMonad][2] window manager.  
 It's flexible enough to give a user options for comprehensive captured workspaces' filtering and post-capture processing.  
 By default it captures all existing workspaces and places resulting screenshot in `~/.xmonad/screenshot.png`
 
-**You probably do not want to use me: used improperly you will get XMonad dead!**
-
-##Screenshots examples
+## Example screenshots
 
   * [Horizontal][3] layout
   * [Vertical][4] layout
 
 
-##Caution
+## Caution
 You need to initialize capturing before using (this is due to gtk contraints).  
 Place call to `initCapturing` before you call `xmonad`:
 
@@ -25,7 +24,7 @@ main = do
 ```
 
 
-##Usage examples
+## Usage examples
 The most simple usage example:
 
 ```haskell
@@ -70,7 +69,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   , ...
   ]
 ```
-
 
  [1]: http://hackage.haskell.org/package/gtk
  [2]: http://xmonad.org
