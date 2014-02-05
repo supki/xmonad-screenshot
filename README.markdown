@@ -1,6 +1,6 @@
 # XMonad-screenshot
-[![Hackage](https://budueba.com/hackage/xmonad-screenshot)](http://hackage.haskell.org/package/xmonad-screenshot)
-[![Build Status](https://secure.travis-ci.org/supki/xmonad-screenshot.png?branch=master)](http://travis-ci.org/supki/xmonad-screenshot)
+[![Hackage](https://budueba.com/hackage/xmonad-screenshot)](https://hackage.haskell.org/package/xmonad-screenshot)
+[![Build Status](https://secure.travis-ci.org/supki/xmonad-screenshot.png?branch=master)](https://travis-ci.org/supki/xmonad-screenshot)
 
 [gtk][1]-based screen capturing utility for the [XMonad][2] window manager.  
 It's flexible enough to give a user options for comprehensive captured workspaces' filtering and post-capture processing.  
@@ -70,7 +70,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
   ]
 ```
 
- [1]: http://hackage.haskell.org/package/gtk
+ [1]: https://hackage.haskell.org/package/gtk
  [2]: http://xmonad.org
- [3]: http://vsegda.budueba.com/img/03a4979e2aaddbac418c6a172f9a8479.jpg
- [4]: http://vsegda.budueba.com/img/20dacff202bb7660bae3a16250e0b3e9.jpg
+ [3]: https://vsegda.budueba.com/img/03a4979e2aaddbac418c6a172f9a8479.jpg
+ [4]: https://vsegda.budueba.com/img/20dacff202bb7660bae3a16250e0b3e9.jpg
