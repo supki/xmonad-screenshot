@@ -12,8 +12,24 @@ By default it captures all existing workspaces and places resulting screenshot i
   * [Vertical][4] layout
 
 
-## Caution
-You need to initialize capturing before using (this is due to gtk contraints).  
+## Caveats
+
+### Installation
+
+You may want to make sure you have [`gtk2hs-buildtools`][5] package installed and
+its binaries are in `PATH` before installing `xmonad-screenshot`:
+
+```
+$ type gtk2hsC2hs
+gtk2hsC2hs is /home/user/.cabal/bin/gtk2hsC2hs
+```
+
+If you do not see any encouraging output, try `cabal install gtk2hs-buildtools` and/or check
+`PATH` contains `/home/user/.cabal/bin` directory
+
+### Initialization
+
+Due to gtk (and XMonad) constraints you need to initialize the capturing before using it.  
 Place call to `initCapturing` before you call `xmonad`:
 
 ```haskell
@@ -74,3 +90,4 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
  [2]: http://xmonad.org
  [3]: https://vsegda.budueba.com/img/03a4979e2aaddbac418c6a172f9a8479.jpg
  [4]: https://vsegda.budueba.com/img/20dacff202bb7660bae3a16250e0b3e9.jpg
+ [5]: https://hackage.haskell.org/package/gtk2hs-buildtools
