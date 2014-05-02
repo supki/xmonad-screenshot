@@ -5,4 +5,6 @@ ghc:
     - 7.6
 
 before_install:
-  - cabal install gtk2hs-buildtools
+    - cabal install alex
+    - cabal install happy
+    - cabal install gtk2hs-buildtools
