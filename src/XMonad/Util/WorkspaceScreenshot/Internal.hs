@@ -21,6 +21,7 @@ import Control.Applicative ((<$>))
 import Control.Concurrent (threadDelay)
 import Control.Monad (filterM, foldM_, (>=>))
 import Data.Maybe (catMaybes)
+import Data.String (fromString)
 
 import Graphics.UI.Gtk (initGUI, Rectangle(..), drawableGetSize, drawWindowGetDefaultRootWindow)
 import Graphics.UI.Gtk.Gdk.Pixbuf (Colorspace(ColorspaceRgb), Pixbuf, pixbufCopyArea, pixbufGetFromDrawable, pixbufGetHeight, pixbufGetWidth, pixbufNew, pixbufSave)
@@ -122,5 +123,5 @@ merge layout ps = do
   fill layout ps p
   dir ← getXMonadDir
   let filepath = (dir ++ "/screenshot.png")
-  pixbufSave p filepath "png" []
+  pixbufSave p filepath (fromString "png") ([] :: [(String,String)])
   return filepath
