@@ -2,8 +2,8 @@
 [![Hackage](https://budueba.com/hackage/xmonad-screenshot)](https://hackage.haskell.org/package/xmonad-screenshot)
 [![Build Status](https://secure.travis-ci.org/supki/xmonad-screenshot.png?branch=master)](https://travis-ci.org/supki/xmonad-screenshot)
 
-[gtk][1]-based screen capturing utility for the [XMonad][2] window manager.  
-It's flexible enough to give a user options for comprehensive captured workspaces' filtering and post-capture processing.  
+[gtk][1]-based screen capturing utility for the [XMonad][2] window manager.
+It's flexible enough to give a user options for comprehensive captured workspaces' filtering and post-capture processing.
 By default it captures all existing workspaces and places resulting screenshot in `~/.xmonad/screenshot.png`
 
 ## Example screenshots
@@ -29,7 +29,7 @@ If you do not see any encouraging output, try `cabal install gtk2hs-buildtools` 
 
 ### Initialization
 
-Due to gtk (and XMonad) constraints you need to initialize the capturing before using it.  
+Due to gtk (and XMonad) constraints you need to initialize the capturing before using it.
 Place call to `initCapturing` before you call `xmonad`:
 
 ```haskell
@@ -88,6 +88,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
  [1]: https://hackage.haskell.org/package/gtk
  [2]: http://xmonad.org
- [3]: https://vsegda.budueba.com/img/03a4979e2aaddbac418c6a172f9a8479.jpg
+ [3]: http://i.imgur.com/s9nbOaZ.png
  [4]: https://vsegda.budueba.com/img/20dacff202bb7660bae3a16250e0b3e9.jpg
  [5]: https://hackage.haskell.org/package/gtk2hs-buildtools
