@@ -1,17 +1,36 @@
 name:                xmonad-screenshot
 version:             0.1.1.0
 synopsis:            Workspaces screenshooting utility for XMonad.
-homepage:            http://github.com/supki/xmonad-screenshot
+description:
+  See README.markdown
+homepage:            https://github.com/supki/xmonad-screenshot
 license:             MIT
 license-file:        LICENSE
 author:              Matvey Aksenov
 maintainer:          Dmitry Malikov, malikov.d.y@gmail.com
 category:            XMonad
 build-type:          Simple
-cabal-version:       >=1.8
+cabal-version:       >= 1.10
+extra-source-files:
+  CHANGELOG.markdown
+  README.markdown
+
+source-repository head
+  type: git
+  location: https://github.com/supki/xmonad-screenshot
 
 library
-  build-depends:       base >= 3 && < 5, xmonad >= 0.9, gtk >= 0.12.3
-  exposed-modules:     XMonad.Util.WorkspaceScreenshot
-  other-modules:       XMonad.Util.WorkspaceScreenshot.Internal
-  hs-source-dirs:      src
+  default-language:
+    Haskell2010
+  build-depends:
+      base   >= 3      && < 5
+    , xmonad >= 0.9
+    , gtk    >= 0.12.3
+  hs-source-dirs:
+    src
+  exposed-modules:
+    XMonad.Util.WorkspaceScreenshot
+  other-modules:
+    XMonad.Util.WorkspaceScreenshot.Internal
+  ghc-options:
+    -Wall
