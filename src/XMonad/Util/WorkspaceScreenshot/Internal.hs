@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_HADDOCK hide #-}
 -- | Provides an utility functions for easy and robust workspaces' screen capturing.
 module XMonad.Util.WorkspaceScreenshot.Internal
