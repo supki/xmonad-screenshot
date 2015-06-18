@@ -1,5 +1,5 @@
 name:                xmonad-screenshot
-version:             0.1.1.0
+version:             0.1.2
 synopsis:            Workspaces screenshooting utility for XMonad.
 description:
   See README.markdown
@@ -16,8 +16,13 @@ extra-source-files:
   README.markdown
 
 source-repository head
-  type: git
+  type:     git
   location: https://github.com/supki/xmonad-screenshot
+
+source-repository this
+  type:     git
+  location: https://github.com/supki/xmonad-screenshot
+  tag:      0.1.2
 
 library
   default-language:
